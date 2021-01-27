@@ -4,7 +4,7 @@ const { sendWelcomeEmail, sendGoodbyeEmail } = require('../emails/account')
 
 // @desc    Create a user
 // @route   POST /api/users
-// @access  Private
+// @access  Public
 exports.createUser = async (req, res, next) => {
   const user = new User(req.body)
   try {
@@ -32,7 +32,7 @@ exports.createUser = async (req, res, next) => {
 
 // @desc    Login a user
 // @route   POST /api/users/login
-// @access  Private
+// @access  Public
 exports.loginUser = async (req, res) => {
   try {
     const { email, password, username } = req.body

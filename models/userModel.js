@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 
 const { Schema } = mongoose;
 
-//Explicitly defining user schema
+//Explicitly define user schema
 const userSchema = new Schema({
   username: {
     type: String,
@@ -112,4 +112,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-module.exports = mongoose.model('User', userSchema)
+//Init user model and export
+const User = mongoose.model('User', userSchema)
+module.exports = User
