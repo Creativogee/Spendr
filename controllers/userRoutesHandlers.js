@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const sharp = require('sharp')
 const { sendWelcomeEmail, sendGoodbyeEmail } = require('../emails/account') 
 
 
@@ -115,3 +116,50 @@ exports.deleteUser = async () => {
     res.status(500).send()
   }
 };
+
+// @desc    Upload profilePicture
+// @access  Private
+// @route   POST /api/users/avatar
+exports.uploadProfilePicture = async (req, res) => {
+  try {
+  const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
+  req.user.profilePicture = buffer
+  await req.user.save()
+  res.json({
+    success: true,
+    message: 'Upload successful'
+  }) 
+  } catch (e) {
+    res.status(400).send({ error: e.message })
+  }
+}
+
+// @desc    Read profilePicture
+// @access  Private
+// @route   GET /api/users/avatar
+exports.readProfilePicture = async (req, res) => {
+  try {
+    const user = await User.findById(req.user)
+
+    if(!user) {
+      throw new Error()
+    }
+
+    res.set('Content-Type', 'image/png')
+    res.send(req.user.profilePicture)
+  } catch (e) {
+    res.status(404).send()
+  }
+}
+
+// @desc    Delete profilePicture
+// @access  Private
+// @route   DELETE /api/users/avatar
+exports.deleteProfilePicture = async (req, res) => {
+  req.user.profilePicture = undefined
+  await req.user.save()
+  res.json({
+    success: true,
+    message: 'Delete successful'
+  })
+}

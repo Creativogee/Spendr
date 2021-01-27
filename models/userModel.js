@@ -19,6 +19,7 @@ const userSchema = new Schema({
       }
     },
   },
+
   email: {
     type: String,
     required: true,
@@ -31,6 +32,7 @@ const userSchema = new Schema({
       }
     },
   },
+
   password: {
     type: String,
     required: true,
@@ -45,6 +47,7 @@ const userSchema = new Schema({
       }
     },
   },
+
   tokens: [
     {
       token: {
@@ -53,7 +56,16 @@ const userSchema = new Schema({
       },
     },
   ],
-});
+
+  profilePicture: {
+    type: Buffer,
+  }
+},
+
+{
+  timestamps: true,
+}
+);
 
 //removes password and tokens from response to client
 userSchema.methods.toJSON = function () {
