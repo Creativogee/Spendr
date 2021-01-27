@@ -1,7 +1,7 @@
 const express = require('express');
 const router = new express.Router();
 const auth = require('../middleware/auth');
-const { profilePictureUpload } = require('../files/upload')
+const { profilePictureUploadHandler } = require('../files/upload')
 
 const {
   createUser,
@@ -29,7 +29,7 @@ router
 
 router
   .route('/account/avatar')
-  .post( auth, profilePictureUpload.single('picture'), uploadProfilePicture)
+  .post( auth, uploadProfilePicture)
   .get(auth, readProfilePicture)
   .delete(auth, deleteProfilePicture)
 
