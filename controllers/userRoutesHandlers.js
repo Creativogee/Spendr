@@ -1,0 +1,117 @@
+const User = require('../models/userModel');
+const { sendWelcomeEmail, sendGoodbyeEmail } = require('../emails/account') 
+
+
+// @desc    Create a user
+// @route   POST /api/users
+// @access  Private
+exports.createUser = async (req, res, next) => {
+  const user = new User(req.body)
+  try {
+    await user.save()
+    sendWelcomeEmail(user.email, user.username)
+    const token = await user.generateAuthToken()
+
+    return res.status(201).json({ success: true, user, token })
+  } catch (e) {
+    if (e.name === 'ValidationError') {
+      const messages = Object.values(e.errors).map(value => value.message)
+
+      return res.status(400).json({
+        success: false,
+        error: messages,
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: 'Server Error',
+      });
+    }
+  }
+};
+
+// @desc    Login a user
+// @route   POST /api/users/login
+// @access  Private
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password, username } = req.body
+    const user = await User.findByCredentials(email, password, username)
+    const token = await user.generateAuthToken();
+
+    res.status(200).json({ success: true, user, token })
+  } catch (e) {
+    res.status(404).json({ success: false, message: 'Unable to login' })
+  }
+};
+
+// @desc    Logout a user on current platform or all platforms
+// @access  Private
+// @route   POST /api/users/logout
+// @instc   POST /api/users/logout?sn=all
+
+exports.logoutUser = async (req, res) => {
+  try {
+    if(Object.keys(req.query).length === 0) {
+      req.user.tokens = req.user.tokens.filter(token => {
+        return token.token !== req.token
+      });
+      await req.user.save()
+      return res.json({ success: true, message: 'Logout successful' })
+    }
+
+    if(req.query.sn === 'all') {
+      req.user.tokens = []
+      await req.user.save()
+      return res.json({ success: true, message: 'Logout on all platforms successful' })
+    } 
+
+    res.status(400).send()
+
+  } catch (e) {
+    res.status(500).send()
+  }
+};
+
+// @desc    Get user profile
+// @route   GET /api/users/u
+// @access  Private
+exports.getUserProfile = async (req, res) => {
+  res.json({ success: true, user: req.user })
+};
+
+// @desc    Update user profile
+// @route   PATCH /api/users
+// @access  Private
+exports.updateUserProfile = async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['name', 'age', 'email', 'password']
+
+  const isValid = updates.every(update => allowedUpdates.includes(update))
+
+  if (!isValid) {
+    return res.status(400).send({ error: 'Invalid updates!' })
+  }
+
+  try {
+    updates.forEach(update => (req.user[update] = req.body[update]))
+    await req.user.save()
+
+    res.send(req.user)
+  } catch (e) {
+    res.status(400).send(e)
+  }
+};
+
+// @desc    Delete user
+// @route   POST /api/users/delete
+// @access  Private
+exports.deleteUser = async () => {
+  try {
+    await req.user.remove()
+    sendGoodbyeEmail(req.user.email, req.user.username)
+    res.send(req.user)
+  } catch (e) {
+    res.status(500).send()
+  }
+};
