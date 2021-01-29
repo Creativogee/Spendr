@@ -7,13 +7,39 @@ const { sendWelcomeEmail, sendGoodbyeEmail } = require('../emails/account')
 // @route   POST /api/users
 // @access  Public
 exports.createUser = async (req, res, next) => {
-  const user = new User(req.body)
+
+  class CustomError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "customError";
+    }
+  }
+
   try {
+    const user = new User(req.body)
+    
+    const emailMatch = await User.findOne({
+      email: user.email,
+    })
+
+    if (emailMatch) {
+      throw new CustomError('Email is already taken');
+    }
+
+    const usernameMatch = await User.findOne({
+      username: user.username,
+    })
+
+    if (usernameMatch) {
+      throw new CustomError('Username is already taken');
+    }
+
     await user.save()
-    sendWelcomeEmail(user.email, user.username)
+    // sendWelcomeEmail(user.email, user.username)
     const token = await user.generateAuthToken()
 
     return res.status(201).json({ success: true, user, token })
+
   } catch (e) {
     if (e.name === 'ValidationError') {
       const messages = Object.values(e.errors).map(value => value.message)
@@ -22,10 +48,15 @@ exports.createUser = async (req, res, next) => {
         success: false,
         error: messages,
       });
+    } else if(e.name === 'customError') {
+      return res.status(400).json({
+        success: false,
+        error: e.message,
+      })
     } else {
       return res.status(500).json({
         success: false,
-        error: 'Server Error',
+        error: e.message,
       });
     }
   }
@@ -42,7 +73,7 @@ exports.loginUser = async (req, res) => {
 
     res.status(200).json({ success: true, user, token })
   } catch (e) {
-    res.status(404).json({ success: false, message: 'Unable to login' })
+    res.status(404).json({ success: false, error: 'Unable to login' })
   }
 };
 
@@ -110,7 +141,7 @@ exports.updateUserProfile = async (req, res) => {
 exports.deleteUser = async () => {
   try {
     await req.user.remove()
-    sendGoodbyeEmail(req.user.email, req.user.username)
+    // sendGoodbyeEmail(req.user.email, req.user.username)
     res.send(req.user)
   } catch (e) {
     res.status(500).send()
