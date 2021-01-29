@@ -1,4 +1,6 @@
 const User = require('../models/userModel');
+const { profilePictureUpload } = require('../files/upload')
+const multer = require('multer')
 const sharp = require('sharp')
 const { sendWelcomeEmail, sendGoodbyeEmail } = require('../emails/account') 
 
@@ -138,7 +140,7 @@ exports.updateUserProfile = async (req, res) => {
 // @desc    Delete user
 // @route   POST /api/users/delete
 // @access  Private
-exports.deleteUser = async () => {
+exports.deleteUser = async (req, res) => {
   try {
     await req.user.remove()
     // sendGoodbyeEmail(req.user.email, req.user.username)
@@ -152,17 +154,27 @@ exports.deleteUser = async () => {
 // @access  Private
 // @route   POST /api/users/avatar
 exports.uploadProfilePicture = async (req, res) => {
-  try {
-  const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
-  req.user.profilePicture = buffer
-  await req.user.save()
-  res.json({
-    success: true,
-    message: 'Upload successful'
-  }) 
-  } catch (e) {
-    res.status(400).send({ error: e.message })
-  }
+
+  profilePictureUpload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading.
+      return res.status(400).send({
+        error: err.message
+      })
+    } else if (err) {
+      // An unknown/custom error occurred when uploading.
+      return res.status(400).json({error: err.message})
+    }
+    // Everything went fine.
+    const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
+    req.user.profilePicture = buffer
+    await req.user.save()
+    res.json({
+      successful: true,
+      message: 'Upload successful'
+    })
+  })
+
 }
 
 // @desc    Read profilePicture
@@ -170,9 +182,7 @@ exports.uploadProfilePicture = async (req, res) => {
 // @route   GET /api/users/avatar
 exports.readProfilePicture = async (req, res) => {
   try {
-    const user = await User.findById(req.user)
-
-    if(!user) {
+    if(!req.user.profilePicture) {
       throw new Error()
     }
 
