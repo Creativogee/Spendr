@@ -1,7 +1,6 @@
 const express = require('express');
 const router = new express.Router();
 const auth = require('../middleware/auth');
-const { profilePictureUploadHandler } = require('../files/upload')
 
 const {
   createUser,
