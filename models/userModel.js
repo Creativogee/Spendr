@@ -2,11 +2,18 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const otpGen = require('otp-generator');
 
 const { Schema } = mongoose;
 
 //Explicitly define user schema
 const userSchema = new Schema({
+  name: {
+    type: String,
+    lowercase: true,
+    trim: true,
+  },
+
   username: {
     type: String,
     required: [true, 'Please enter a username'],
@@ -48,6 +55,14 @@ const userSchema = new Schema({
     },
   },
 
+  addresses: [
+    {
+      address: String,
+    },
+  ],
+
+  otp: String,
+
   tokens: [
     {
       token: {
@@ -66,6 +81,19 @@ const userSchema = new Schema({
   timestamps: true,
 }
 );
+
+//creates a virtual property of the user
+userSchema.virtual('giftcards', {
+  ref: 'Giftcard',
+  localField: '_id',
+  foreignField: 'authorId',
+})
+
+userSchema.virtual('giftcards', {
+  ref: 'Giftcard',
+  localField: '_id',
+  foreignField: 'holder',
+})
 
 //removes password and tokens from response to client
 userSchema.methods.toJSON = function () {
@@ -112,7 +140,24 @@ userSchema.methods.generateAuthToken = async function () {
 
   await user.save();
   return token;
-};
+}
+
+userSchema.methods.generateAddress = async function (req) {
+  const user= this
+  if(!req.body.otp) {
+    throw new Error('A One-Time-Password (OTP) has been sent to your email')
+  }
+
+  if(user.otp !== req.body.otp) {
+    throw new Error('Invalid OTP')
+  }
+
+  const address = jwt.sign({ _id: user._id.toString()}, user.otp, { expiresIn: '24h'}, {algorithm: 'RS256'})
+  user.addresses = user.addresses.concat({ address })
+  user.otp = undefined
+  await user.save()
+  return `${address} ${user.username}`
+}
 
 //mongoose middleware
 userSchema.pre('save', async function (next) {

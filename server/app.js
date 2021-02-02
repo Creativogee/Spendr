@@ -1,19 +1,14 @@
 const express = require('express');
-const morgan = require('morgan');
 const userRoutes = require('../routers/userRoutes');
+const giftcardRoutes = require('../routers/giftcardRoutes')
 const connectDataBase = require('../db/mongoose');
 
 const app = express();
 
 connectDataBase();
 
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
-
-
 app.use(express.json());
-app.use('/api/users', userRoutes);
+app.use('/api/v1/users', userRoutes, giftcardRoutes);
 
 
 module.exports = app

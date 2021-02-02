@@ -108,7 +108,7 @@ exports.logoutUser = async (req, res) => {
 };
 
 // @desc    Get user profile
-// @route   GET /api/users/u
+// @route   GET /api/users/account
 // @access  Private
 exports.getUserProfile = async (req, res) => {
   res.json({ success: true, user: req.user })
@@ -119,7 +119,7 @@ exports.getUserProfile = async (req, res) => {
 // @access  Private
 exports.updateUserProfile = async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['name', 'age', 'email', 'password']
+  const allowedUpdates = ['username', 'age', 'email', 'password']
 
   const isValid = updates.every(update => allowedUpdates.includes(update))
 
@@ -152,7 +152,7 @@ exports.deleteUser = async (req, res) => {
 
 // @desc    Upload profilePicture
 // @access  Private
-// @route   POST /api/users/avatar
+// @route   POST /api/users/account/avatar
 exports.uploadProfilePicture = async (req, res) => {
 
   profilePictureUpload(req, res, async (err) => {
@@ -170,7 +170,7 @@ exports.uploadProfilePicture = async (req, res) => {
     req.user.profilePicture = buffer
     await req.user.save()
     res.json({
-      successful: true,
+      success: true,
       message: 'Upload successful'
     })
   })
@@ -179,7 +179,7 @@ exports.uploadProfilePicture = async (req, res) => {
 
 // @desc    Read profilePicture
 // @access  Private
-// @route   GET /api/users/avatar
+// @route   GET /api/users/account/avatar
 exports.readProfilePicture = async (req, res) => {
   try {
     if(!req.user.profilePicture) {
@@ -195,7 +195,7 @@ exports.readProfilePicture = async (req, res) => {
 
 // @desc    Delete profilePicture
 // @access  Private
-// @route   DELETE /api/users/avatar
+// @route   DELETE /api/users/account/avatar
 exports.deleteProfilePicture = async (req, res) => {
   req.user.profilePicture = undefined
   await req.user.save()

@@ -6,11 +6,11 @@ const userOneId = mongoose.Types.ObjectId()
 const userOne = {
   _id: userOneId,
   username: 'Creativogee',
-  email: 'creativogee@gmail.com',
+  email: 'creativogee@gmail.com', 
   password: 'theBest123',
   tokens: [{
     token: jwt.sign({_id: userOneId}, process.env.JWT_SECRET)
-  }]
+  }],
 }
 
 const setUpDataBase = async () => {
@@ -19,6 +19,7 @@ const setUpDataBase = async () => {
 }
 
 module.exports = {
-  setUpDataBase,
   userOne,
+  userOneId,
+  setUpDataBase
 }
