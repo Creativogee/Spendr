@@ -12,7 +12,7 @@ const User = require('../models/userModel')
 exports.createGiftcards = async (req, res, next) => {
 
   try {
-    const giftcard = new Giftcard({...req.body, authorId: req.user._id})
+    const giftcard = new Giftcard({...req.body, authorId: req.user._id, holder: req.user._id})
 
     await giftcard.save()
 
@@ -113,7 +113,7 @@ exports.transferGiftcards = async (req, res, next) => {
 
       const giftcard = await Giftcard.findOne({
         _id: req.params.id,
-        authorId: req.user._id
+        holder: req.user._id
       })
 
       if(!giftcard) {
@@ -121,6 +121,15 @@ exports.transferGiftcards = async (req, res, next) => {
       }
 
       giftcard.holder = mongoose.Types.ObjectId(reciever._id)
+      const transfer = {
+        senderId: req.user._id,
+        recieverId: reciever._id,
+        when: Date.now()
+      }
+
+      giftcard.transfers = giftcard.transfers.concat(transfer)
+      
+
       await giftcard.save()
 
       res.json({
