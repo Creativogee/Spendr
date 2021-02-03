@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const User = require('./userModel');
 const {Schema} = mongoose
 
 const giftcardSchema = new Schema({
@@ -12,11 +13,11 @@ const giftcardSchema = new Schema({
     ref: 'User',
   },
 
-  merchant: {
+  type: {
     type: String,
     trim: true,
     lowercase: true,
-    default: 'Spendr Wild'
+    default: 'Spendr Card'
   },
 
   amount: {

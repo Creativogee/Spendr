@@ -86,14 +86,9 @@ const userSchema = new Schema({
 userSchema.virtual('giftcards', {
   ref: 'Giftcard',
   localField: '_id',
-  foreignField: 'authorId',
-})
-
-userSchema.virtual('giftcards', {
-  ref: 'Giftcard',
-  localField: '_id',
   foreignField: 'holder',
 })
+
 
 //removes password and tokens from response to client
 userSchema.methods.toJSON = function () {
@@ -143,11 +138,7 @@ userSchema.methods.generateAuthToken = async function () {
 }
 
 userSchema.methods.generateAddress = async function (req) {
-  const user= this
-  if(!req.body.otp) {
-    throw new Error('A One-Time-Password (OTP) has been sent to your email')
-  }
-
+  const user = this
   if(user.otp !== req.body.otp) {
     throw new Error('Invalid OTP')
   }
@@ -156,7 +147,7 @@ userSchema.methods.generateAddress = async function (req) {
   user.addresses = user.addresses.concat({ address })
   user.otp = undefined
   await user.save()
-  return `${address} ${user.username}`
+  return address
 }
 
 //mongoose middleware

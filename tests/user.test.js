@@ -11,7 +11,7 @@ beforeEach(setUpDataBase)
 
 test('should create user', async () => {
   await request(app)
-      .post('/api/users')
+      .post('/api/v1/users')
       .send({
         username: 'wazza',
         email: 'wazza@mail.com',
@@ -21,7 +21,7 @@ test('should create user', async () => {
 
 test('should delete user after authorization', async () => {
   await request(app)
-      .delete('/api/users/account')
+      .delete('/api/v1/users/account')
       .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
       .send()
       .expect(200)
@@ -32,7 +32,7 @@ test('should delete user after authorization', async () => {
 
 test('should login user with email and password', async () => {
   await request(app)
-      .post('/api/users/login')
+      .post('/api/v1/users/login')
       .send({
         email: userOne.email,
         password: userOne.password
@@ -42,7 +42,7 @@ test('should login user with email and password', async () => {
 
 test('should login user with username and password', async () => {
   await request(app)
-      .post('/api/users/login')
+      .post('/api/v1/users/login')
       .send({
         username: userOne.username,
         password: userOne.password
@@ -52,7 +52,7 @@ test('should login user with username and password', async () => {
 
 test('should logout user after authorization', async () => {
   await request(app)
-      .post('/api/users/logout')
+      .post('/api/v1/users/logout')
       .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
       .send()
       .expect(200)
@@ -60,7 +60,7 @@ test('should logout user after authorization', async () => {
 
 test('should get user profile after authorization', async () => {
   await request(app)
-      .get('/api/users/account')
+      .get('/api/v1/users/account')
       .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
       .send()
       .expect(200)
@@ -68,7 +68,7 @@ test('should get user profile after authorization', async () => {
 
 test('should update user profile', async () => {
   await request(app)
-      .patch('/api/users/account')
+      .patch('/api/v1/users/account')
       .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
       .send({
         username: 'creativorgy'
@@ -78,7 +78,7 @@ test('should update user profile', async () => {
 
 test('should upload profile picture after authorization', async () => {
   await request(app)
-      .post('/api/users/account/avatar')
+      .post('/api/v1/users/account/avatar')
       .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
       .attach('picture', 'tests/fixtures/files/profile-pic.jpg')
       .expect(200)
@@ -86,7 +86,7 @@ test('should upload profile picture after authorization', async () => {
 
 test('should delete profile picture after authorization', async () => {
   await request(app)
-      .delete('/api/users/account/avatar')
+      .delete('/api/v1/users/account/avatar')
       .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
       .send()
       .expect(200)

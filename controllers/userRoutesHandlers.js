@@ -70,7 +70,9 @@ exports.createUser = async (req, res, next) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password, username } = req.body
+
     const user = await User.findByCredentials(email, password, username)
+
     const token = await user.generateAuthToken();
 
     res.status(200).json({ success: true, user, token })

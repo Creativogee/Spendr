@@ -1,4 +1,6 @@
+const mongoose = require('mongoose')
 const otpGen = require('otp-generator')
+const bcrypt = require('bcryptjs')
 const { sendOTP } = require('../emails/account')
 const Giftcard = require('../models/giftcardModel')
 const User = require('../models/userModel')
@@ -7,7 +9,7 @@ const User = require('../models/userModel')
 // @desc    Create a giftcard
 // @route   POST /api/users/account/giftcards
 // @access  Private
-exports.createGiftcard = async (req, res, next) => {
+exports.createGiftcards = async (req, res, next) => {
 
   try {
     const giftcard = new Giftcard({...req.body, authorId: req.user._id})
@@ -30,7 +32,7 @@ exports.createGiftcard = async (req, res, next) => {
 // @desc    Read giftcards
 // @route   GET /api/users/account/giftcards
 // @access  Private
-exports.readGiftcard = async (req, res, next) => {
+exports.readGiftcards = async (req, res, next) => {
   const match = {};
   const sort = {};
 
@@ -65,48 +67,74 @@ exports.readGiftcard = async (req, res, next) => {
 }
 
 // @desc    Recieve giftcards
-// @route   POST /api/users/account/giftcards/#/?trf=recv
-// @route   POST /api/users/account/giftcards/#/?trf=send
+// @route   POST /api/users/account/giftcards/transfer/-?trf=recv
+// @route   POST /api/users/account/giftcards/transfer/:id/?trf=send
 // @access  Private
-exports.transferGiftcard = async (req, res, next) => {
+exports.transferGiftcards = async (req, res, next) => {
   try {
+    //Recive request
     if(req.query.trf === 'recv') {
       const user = await User.findById(req.user._id)
+      if(!req.body.otp) {
+        const otp = otpGen.generate(6)
+        req.user.otp = otp
+        await req.user.save()
+        return res.json({succes: true, message: 'A One-Time-Password (OTP) has been sent to you'})
+      }
+
       const address = await user.generateAddress(req)
 
       if(address) {
-        return res.status(200).json({ success: true, address })
+        return res.json({ success: true, address })
       }
     }
-
+    //Send request
     if(req.query.trf === 'send') {
 
-    }
+      const isMatch = await bcrypt.compare(req.body.password, req.user.password);
 
-    res.status(400).send()
+      if (!isMatch) {
+        throw new Error('Incorrect password');
+      }
+
+      const reciever = await User.findOne({username: req.body.username})
+
+      if(!reciever) {
+        throw new Error('User not found')
+      }
+
+      const addressMatch = reciever.addresses.find((item) => {
+        return item.address === req.body.address
+      })
+
+      if(!addressMatch) {
+        throw new Error('Invalid address. Please confirm address')
+      }
+
+      const giftcard = await Giftcard.findOne({
+        _id: req.params.id,
+        authorId: req.user._id
+      })
+
+      if(!giftcard) {
+        throw new Error('Giftcard does not exist')
+      }
+
+      giftcard.holder = mongoose.Types.ObjectId(reciever._id)
+      await giftcard.save()
+
+      res.json({
+        success: true,
+        message: 'Giftcard transfer successful',
+        giftcard
+      })
+    }
 
   } catch (e) {
-
-    if(e.message == 'Invalid OTP') {
-      res.status(400).json({success: false, error: e.message})
+    if(e.name === 'Error') {
+      return res.status(400).json({success: false, error: e.message})
     }
 
-    if(e.message == 'A One-Time-Password (OTP) has been sent to your email') {
-      const otp = otpGen.generate(6)
-      req.user.otp = otp
-      await req.user.save()
-      // sendOTP(req.user.email, req.user.name, otp)
-      res.json({success: true, message: e.message})
-    }
-    
-  }
-}
-
-exports.sendGiftcard = async (req, res, next) => {
-
-  try {
-
-  } catch (e) {
-    
+    res.status(500).json({success: false, error: e.message})
   }
 }
