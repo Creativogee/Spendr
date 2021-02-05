@@ -19,18 +19,18 @@ const {
 
 router.route('/merchants').post(createMerchant);
 
-// router.route('/merchant/login').post(loginMerchant);
+router.route('/merchants/login').post(loginMerchant);
 
-// router.route('/merchant/logout').post(auth, logoutMerchant)
+router.route('/merchants/logout').post(auth, logoutMerchant)
 
-// router
-//   .route('/merchant/account')
-//   .get(auth, getMerchantProfile)
-//   .patch(auth, updateMerchantProfile)
-//   .delete(auth, deleteMerchant)
+router
+  .route('/merchants/account')
+  .get(auth, getMerchantProfile)
+  .patch(auth, updateMerchantProfile)
+  .delete(auth, deleteMerchant)
 
 //   router
-//   .route('/merchant/account/avatar')
+//   .route('/merchants/account/avatar')
 //   .post( auth, uploadProfilePicture)
 //   .get(auth, readProfilePicture)
 //   .delete(auth, deleteProfilePicture)

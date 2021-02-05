@@ -62,3 +62,90 @@ exports.createMerchant = async (req, res, next) => {
     }
   }
 }
+
+// @desc    Login a merchant
+// @route   POST /api/v1/merchants/login
+// @access  Public
+exports.loginMerchant = async (req, res) => {
+  try {
+    const { email, password, company } = req.body
+
+    const merchant = await Merchant.findByCredentials(email, password, company)
+
+    const token = await merchant.generateAuthToken();
+
+    res.status(200).json({ success: true, merchant, token })
+  } catch (e) {
+    res.status(404).json({ success: false, error: 'Unable to login' })
+  }
+}
+
+// @desc    Logout a merchant on current platform or all platforms
+// @access  Private
+// @route   POST /api/v1/merchants/logout
+// @instc   POST /api/v1/merchants/logout?sn=all
+exports.logoutMerchant = async (req, res) => {
+  try {
+    if(Object.keys(req.query).length === 0) {
+      req.merchant.tokens = req.merchant.tokens.filter(token => {
+        return token.token !== req.token
+      });
+      await req.merchant.save()
+      return res.json({ success: true, message: 'Logout successful' })
+    }
+
+    if(req.query.sn === 'all') {
+      req.merchant.tokens = []
+      await req.merchant.save()
+      return res.json({ success: true, message: 'Logout on all platforms successful' })
+    } 
+
+    res.status(400).send()
+
+  } catch (e) {
+    res.status(500).send()
+  }
+}
+
+// @desc    Get merchant profile
+// @route   GET /api/v1/merchants/account
+// @access  Private
+exports.getMerchantProfile = async (req, res) => {
+  res.json({ success: true, merchant: req.merchant })
+}
+
+// @desc    Update merchant profile
+// @route   PATCH /api/v1/merchants
+// @access  Private
+exports.updateMerchantProfile = async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['company', 'age', 'email', 'password']
+
+  const isValid = updates.every(update => allowedUpdates.includes(update))
+
+  if (!isValid) {
+    return res.status(400).send({ error: 'Invalid updates!' })
+  }
+
+  try {
+    updates.forEach(update => (req.merchant[update] = req.body[update]))
+    await req.merchant.save()
+
+    res.send(req.merchant)
+  } catch (e) {
+    res.status(400).send(e)
+  }
+}
+
+// @desc    Delete merchant
+// @route   POST /api/v1/merchants/delete
+// @access  Private
+exports.deleteMerchant = async (req, res) => {
+  try {
+    await req.merchant.remove()
+    // sendGoodbyeEmail(req.merchant.email, req.merchant.company)
+    res.send(req.merchant)
+  } catch (e) {
+    res.status(500).send()
+  }
+}
