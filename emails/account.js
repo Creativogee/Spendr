@@ -19,8 +19,17 @@ const sendGoodbyeEmail = (email, name) => {
     text: `Hi ${name}! It was our fault you had to leave. Could you please let us know where we got it wrong? Nevertheless, we hope to have you back sometime soon`
   })
 }
+const sendOTP = (email, name, otp) => {
+  sgMail.send({
+    to: email,
+    from: 'creativogee@gmail.com',  
+    subject: 'Spendr OTP Service',
+    text: `Hi ${name}! Your One-Time-Password = ${otp}`
+  })
+}
 
 module.exports = {
   sendWelcomeEmail,
-  sendGoodbyeEmail
+  sendGoodbyeEmail,
+  sendOTP
 }
