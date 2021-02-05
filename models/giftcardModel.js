@@ -7,7 +7,7 @@ const giftcardSchema = new Schema({
     ref: 'User',
   },
 
-  holder: {
+  holderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },

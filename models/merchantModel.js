@@ -90,7 +90,7 @@ merchantSchema.index({
 merchantSchema.virtual('giftcards', {
   ref: 'Giftcard',
   localField: '_id',
-  foreignField: 'holder',
+  foreignField: 'holderId',
 })
 
 
@@ -137,9 +137,7 @@ merchantSchema.statics.findByCredentials = async (email, password, company) => {
 merchantSchema.methods.generateAuthToken = async function () {
   const merchant = this;
   const token = jwt.sign({ _id: merchant._id.toString() }, process.env.JWT_SECRET);
-  merchant.tokens = merchant.tokens.concat({ token });
 
-  await merchant.save();
   return token;
 }
 

@@ -7,7 +7,7 @@ const {
   readGiftcards,
   transferGiftcards,
   scanGiftcards,
-} = require('../controllers/giftCardRoutesHandlers')
+} = require('../controllers/giftcardRoutesHandlers')
 
 router
   .route('/account/giftcards')
@@ -17,5 +17,9 @@ router
 router
   .route('/account/giftcards/transfer/:id')
   .post(auth, transferGiftcards)
+
+router
+  .route('/account/giftcards/:id/:spendr')
+  .post(auth, scanGiftcards)
 
 module.exports = router

@@ -38,6 +38,9 @@ exports.createMerchant = async (req, res, next) => {
     await merchant.save()
     // sendWelcomeEmail(merchant.email, merchant.company)
     const token = await merchant.generateAuthToken()
+    merchant.tokens = merchant.tokens.concat({ token });
+
+    await merchant.save();
 
     return res.status(201).json({ success: true, merchant, token })
 
@@ -83,7 +86,6 @@ exports.loginMerchant = async (req, res) => {
 // @desc    Logout a merchant on current platform or all platforms
 // @access  Private
 // @route   POST /api/v1/merchants/logout
-// @instc   POST /api/v1/merchants/logout?sn=all
 exports.logoutMerchant = async (req, res) => {
   try {
     if(Object.keys(req.query).length === 0) {
@@ -93,12 +95,6 @@ exports.logoutMerchant = async (req, res) => {
       await req.merchant.save()
       return res.json({ success: true, message: 'Logout successful' })
     }
-
-    if(req.query.sn === 'all') {
-      req.merchant.tokens = []
-      await req.merchant.save()
-      return res.json({ success: true, message: 'Logout on all platforms successful' })
-    } 
 
     res.status(400).send()
 
@@ -119,7 +115,7 @@ exports.getMerchantProfile = async (req, res) => {
 // @access  Private
 exports.updateMerchantProfile = async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['company', 'age', 'email', 'password']
+  const allowedUpdates = ['company', 'phone', 'website', 'email', 'password']
 
   const isValid = updates.every(update => allowedUpdates.includes(update))
 

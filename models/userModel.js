@@ -14,6 +14,11 @@ const userSchema = new Schema({
     trim: true,
   },
 
+  age: {
+    type: Number,
+    trim: true,
+  },
+
   phone: {
     type: Number,
     trim: true,
@@ -42,7 +47,6 @@ const userSchema = new Schema({
       }
     },
   },
-
 
   password: {
     type: String,
@@ -86,6 +90,7 @@ const userSchema = new Schema({
 }
 );
 
+//setting up unique indices
 userSchema.index({
   email: 1,
   username: 1,
@@ -98,7 +103,7 @@ userSchema.index({
 userSchema.virtual('giftcards', {
   ref: 'Giftcard',
   localField: '_id',
-  foreignField: 'holder',
+  foreignField: 'holderId',
 })
 
 
