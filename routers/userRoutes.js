@@ -1,6 +1,6 @@
 const express = require('express');
 const router = new express.Router();
-const auth = require('../middleware/auth');
+const auth = require('../middleware/userAuth');
 
 const {
   createUser,
@@ -14,20 +14,20 @@ const {
   deleteProfilePicture
 } = require('../controllers/userRoutesHandlers');
 
-router.route('/').post(createUser);
+router.route('/users').post(createUser);
 
-router.route('/login').post(loginUser);
+router.route('/users/login').post(loginUser);
 
-router.route('/logout').post(auth, logoutUser);
+router.route('/users/logout').post(auth, logoutUser);
 
 router
-  .route('/account')
+  .route('/users/account')
   .get(auth, getUserProfile)
   .patch(auth, updateUserProfile)
   .delete(auth, deleteUser);
 
 router
-  .route('/account/avatar')
+  .route('/users/account/avatar')
   .post( auth, uploadProfilePicture)
   .get(auth, readProfilePicture)
   .delete(auth, deleteProfilePicture)

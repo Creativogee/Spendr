@@ -78,11 +78,15 @@ exports.transferGiftcards = async (req, res, next) => {
       if(!req.body.otp) {
         const otp = otpGen.generate(6)
         req.user.otp = otp
-        await req.user.save()
         return res.json({succes: true, message: 'A One-Time-Password (OTP) has been sent to you'})
       }
 
       const address = await user.generateAddress(req)
+      user.addresses = user.addresses.concat({ address })
+      user.otp = undefined
+
+      await req.user.save()
+
 
       if(address) {
         return res.json({ success: true, address })

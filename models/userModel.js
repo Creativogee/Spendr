@@ -14,11 +14,15 @@ const userSchema = new Schema({
     trim: true,
   },
 
+  phone: {
+    type: Number,
+    trim: true,
+  },
+
   username: {
     type: String,
     required: [true, 'Please enter a username'],
     trim: true,
-    unique: true,
     lowercase: true,
     validate(value) {
       if (value.match(/\s/)) {
@@ -30,7 +34,6 @@ const userSchema = new Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
     lowercase: true,
     validate(value) {
@@ -39,6 +42,7 @@ const userSchema = new Schema({
       }
     },
   },
+
 
   password: {
     type: String,
@@ -81,6 +85,14 @@ const userSchema = new Schema({
   timestamps: true,
 }
 );
+
+userSchema.index({
+  email: 1,
+  username: 1,
+  phone: 1
+}, {
+  unique: true,
+})
 
 //creates a virtual property of the user
 userSchema.virtual('giftcards', {
@@ -131,10 +143,8 @@ userSchema.statics.findByCredentials = async (email, password, username) => {
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
   const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET);
-  user.tokens = user.tokens.concat({ token });
 
-  await user.save();
-  return token;
+  return token
 }
 
 userSchema.methods.generateAddress = async function (req) {
@@ -144,9 +154,7 @@ userSchema.methods.generateAddress = async function (req) {
   }
 
   const address = jwt.sign({ _id: user._id.toString()}, user.otp, { expiresIn: '24h'}, {algorithm: 'RS256'})
-  user.addresses = user.addresses.concat({ address })
-  user.otp = undefined
-  await user.save()
+
   return address
 }
 

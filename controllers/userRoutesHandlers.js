@@ -36,13 +36,17 @@ exports.createUser = async (req, res, next) => {
       throw new CustomError('Username is already taken');
     }
 
+    const token = await user.generateAuthToken()
+    user.tokens = user.tokens.concat({ token })
+
     await user.save()
     // sendWelcomeEmail(user.email, user.username)
-    const token = await user.generateAuthToken()
+
 
     return res.status(201).json({ success: true, user, token })
 
   } catch (e) {
+    console.log(e)
     if (e.name === 'ValidationError') {
       const messages = Object.values(e.errors).map(value => value.message)
 
