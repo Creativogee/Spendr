@@ -35,14 +35,18 @@ exports.createMerchant = async (req, res, next) => {
       throw new CustomError('company name is already taken');
     }
 
-    await merchant.save()
-    // sendWelcomeEmail(merchant.email, merchant.company)
     const token = await merchant.generateAuthToken()
-    merchant.tokens = merchant.tokens.concat({ token });
+    merchant.token = token
+    
+    await merchant.save()
 
-    await merchant.save();
+    sendWelcomeEmail(merchant.email, merchant.company)
 
-    return res.status(201).json({ success: true, merchant, token })
+    return res.status(201).json({
+      success: true, 
+      merchant, 
+      token 
+    })
 
   } catch (e) {
     if (e.name === 'ValidationError') {
@@ -75,31 +79,38 @@ exports.loginMerchant = async (req, res) => {
 
     const merchant = await Merchant.findByCredentials(email, password, company)
 
-    const token = await merchant.generateAuthToken();
+    const token = await merchant.generateAuthToken()
+    merchant.token = token
 
-    res.status(200).json({ success: true, merchant, token })
+    await merchant.save();
+
+    res.status(200).json({
+      success: true, 
+      merchant, 
+      token
+    })
   } catch (e) {
-    res.status(404).json({ success: false, error: 'Unable to login' })
+    res.status(404).json({
+      success: false, 
+      error: 'Unable to login' 
+    })
   }
 }
 
-// @desc    Logout a merchant on current platform or all platforms
+// @desc    Logout a merchant
 // @access  Private
 // @route   POST /api/v1/merchants/logout
 exports.logoutMerchant = async (req, res) => {
   try {
-    if(Object.keys(req.query).length === 0) {
-      req.merchant.tokens = req.merchant.tokens.filter(token => {
-        return token.token !== req.token
-      });
+      req.merchant.token = 'OFFLINE'
       await req.merchant.save()
       return res.json({ success: true, message: 'Logout successful' })
-    }
-
-    res.status(400).send()
-
+  
   } catch (e) {
-    res.status(500).send()
+    return res.status(500).json({
+      success: false,
+      error: e.message,
+    });
   }
 }
 
@@ -120,7 +131,10 @@ exports.updateMerchantProfile = async (req, res) => {
   const isValid = updates.every(update => allowedUpdates.includes(update))
 
   if (!isValid) {
-    return res.status(400).send({ error: 'Invalid updates!' })
+    return res.status(400).json({
+      success: false, 
+      error: 'Invalid updates!' 
+    })
   }
 
   try {
@@ -129,8 +143,10 @@ exports.updateMerchantProfile = async (req, res) => {
 
     res.send(req.merchant)
   } catch (e) {
-    res.status(400).send(e)
-  }
+    return res.status(400).json({
+      success: false,
+      error: e.message,
+    })  }
 }
 
 // @desc    Delete merchant
@@ -139,9 +155,12 @@ exports.updateMerchantProfile = async (req, res) => {
 exports.deleteMerchant = async (req, res) => {
   try {
     await req.merchant.remove()
-    // sendGoodbyeEmail(req.merchant.email, req.merchant.company)
+    sendGoodbyeEmail(req.merchant.email, req.merchant.company)
     res.send(req.merchant)
   } catch (e) {
-    res.status(500).send()
+    return res.status(500).json({
+      success: false,
+      error: e.message,
+    });
   }
 }

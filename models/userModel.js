@@ -71,14 +71,12 @@ const userSchema = new Schema({
 
   otp: String,
 
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
+  secret_key: String,
+
+  token: {
+    type: String,
+    required: true,
+  },
 
   profilePicture: {
     type: Buffer,
@@ -107,13 +105,17 @@ userSchema.virtual('giftcards', {
 })
 
 
-//removes password and tokens from response to client
+//removes password and token from response to client
 userSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
 
   delete userObject.password;
-  delete userObject.tokens;
+  delete userObject.token
+  delete userObject.addresses
+  delete userObject.createdAt
+  delete userObject.updatedAt
+  delete userObject.__v
   delete userObject.profilePicture;
 
   return userObject;
@@ -154,11 +156,7 @@ userSchema.methods.generateAuthToken = async function () {
 
 userSchema.methods.generateAddress = async function (req) {
   const user = this
-  if(user.otp !== req.body.otp) {
-    throw new Error('Invalid OTP')
-  }
-
-  const address = jwt.sign({ _id: user._id.toString()}, user.otp, { expiresIn: '24h'}, {algorithm: 'RS256'})
+  const address = jwt.sign({ _id: user._id.toString()}, req.user.secret_key, {}, {algorithm: 'RS256'})
 
   return address
 }

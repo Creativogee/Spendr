@@ -7,22 +7,18 @@ const userOneId = mongoose.Types.ObjectId()
 const userOne = {
   _id: userOneId,
   username: 'Creativogee',
-  email: 'creativogee@gmail.com', 
+  email: 'creativogee@mail.com', 
   password: 'theBest123',
-  tokens: [{
-    token: jwt.sign({_id: userOneId}, process.env.JWT_SECRET)
-  }],
+  token: jwt.sign({_id: userOneId}, process.env.JWT_SECRET),
 }
 
 const merchantOneId = mongoose.Types.ObjectId()
 const merchantOne = {
   _id: merchantOneId,
   company: 'Beehance',
-  email: 'Beehance@mail.com', 
+  email: 'Beehanc@mail.com', 
   password: 'santiago456',
-  tokens: [{
-    token: jwt.sign({_id: merchantOneId}, process.env.JWT_SECRET)
-  }],
+  token: jwt.sign({_id: merchantOneId}, process.env.JWT_SECRET)
 }
 
 const setUpDataBase = async () => {

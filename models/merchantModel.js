@@ -57,14 +57,10 @@ const merchantSchema = new Schema({
     trim: true,
   },
   
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
+  token: {
+    type: String,
+    required: true,
+  },
 
   verifyEmail: mongoose.Types.ObjectId,
 
@@ -94,13 +90,13 @@ merchantSchema.virtual('giftcards', {
 })
 
 
-//removes password and tokens from response to client
+//removes password and token from response to client
 merchantSchema.methods.toJSON = function () {
   const merchant = this
   const merchantObject = merchant.toObject()
 
   delete merchantObject.password
-  delete merchantObject.tokens
+  delete merchantObject.token
   delete merchantObject.verifyEmail
   delete merchantObject.profilePicture
 

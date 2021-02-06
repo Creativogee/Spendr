@@ -22,7 +22,7 @@ test('should create merchant', async () => {
 test('should delete merchant after authorization', async () => {
   await request(app)
       .delete('/api/v1/merchants/account')
-      .set('Authorization', `Bearer ${merchantOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${merchantOne.token}`)
       .send()
       .expect(200)
 
@@ -53,7 +53,7 @@ test('should login merchant with company and password', async () => {
 test('should logout merchant after authorization', async () => {
   await request(app)
       .post('/api/v1/merchants/logout')
-      .set('Authorization', `Bearer ${merchantOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${merchantOne.token}`)
       .send()
       .expect(200)
 })
@@ -61,7 +61,7 @@ test('should logout merchant after authorization', async () => {
 test('should get merchant profile after authorization', async () => {
   await request(app)
       .get('/api/v1/merchants/account')
-      .set('Authorization', `Bearer ${merchantOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${merchantOne.token}`)
       .send()
       .expect(200)
 })
@@ -69,7 +69,7 @@ test('should get merchant profile after authorization', async () => {
 test('should update merchant profile', async () => {
   await request(app)
       .patch('/api/v1/merchants/account')
-      .set('Authorization', `Bearer ${merchantOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${merchantOne.token}`)
       .send({
         company: 'XXX-videos'
       })

@@ -7,7 +7,7 @@ const auth = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const merchant = await Merchant.findOne({
       _id: decoded._id,
-      'tokens.token': token,
+      token,
     })
 
     if (!merchant) {

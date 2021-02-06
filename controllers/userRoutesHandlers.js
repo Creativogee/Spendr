@@ -6,7 +6,7 @@ const { sendWelcomeEmail, sendGoodbyeEmail } = require('../emails/account')
 
 
 // @desc    Create a user
-// @route   POST /api/users
+// @route   POST /api/v1/users
 // @access  Public
 exports.createUser = async (req, res, next) => {
 
@@ -37,13 +37,18 @@ exports.createUser = async (req, res, next) => {
     }
 
     const token = await user.generateAuthToken()
-    user.tokens = user.tokens.concat({ token })
-
+    user.token = token
+    
     await user.save()
-    // sendWelcomeEmail(user.email, user.username)
+    
+    sendWelcomeEmail(user.email, user.username)
 
 
-    return res.status(201).json({ success: true, user, token })
+    return res.status(201).json({
+      success: true, 
+      user, 
+      token 
+    })
 
   } catch (e) {
     console.log(e)
@@ -69,7 +74,7 @@ exports.createUser = async (req, res, next) => {
 };
 
 // @desc    Login a user
-// @route   POST /api/users/login
+// @route   POST /api/v1/users/login
 // @access  Public
 exports.loginUser = async (req, res) => {
   try {
@@ -77,51 +82,50 @@ exports.loginUser = async (req, res) => {
 
     const user = await User.findByCredentials(email, password, username)
 
-    const token = await user.generateAuthToken();
+    const token = await user.generateAuthToken()
+    user.token = token
+    
+    await user.save()
 
-    res.status(200).json({ success: true, user, token })
+    res.status(200).json({
+      success: true, 
+      user, 
+      token
+    })
   } catch (e) {
-    res.status(404).json({ success: false, error: 'Unable to login' })
+    res.status(404).json({
+      success: false, 
+      error: 'Unable to login' 
+    })
   }
 };
 
-// @desc    Logout a user on current platform or all platforms
+// @desc    Logout a user
 // @access  Private
-// @route   POST /api/users/logout
-// @instc   POST /api/users/logout?sn=all
+// @route   POST /api/v1/users/logout
 
-exports.logoutUser = async (req, res) => {
+exports.logoutUser = async (req, res, next) => {
   try {
-    if(Object.keys(req.query).length === 0) {
-      req.user.tokens = req.user.tokens.filter(token => {
-        return token.token !== req.token
-      });
-      await req.user.save()
+    req.user.token = 'OFFLINE'
+    await req.user.save()
       return res.json({ success: true, message: 'Logout successful' })
-    }
-
-    if(req.query.sn === 'all') {
-      req.user.tokens = []
-      await req.user.save()
-      return res.json({ success: true, message: 'Logout on all platforms successful' })
-    } 
-
-    res.status(400).send()
-
   } catch (e) {
-    res.status(500).send()
+    return res.status(500).json({
+      success: false,
+      error: e.message,
+    });
   }
 };
 
 // @desc    Get user profile
-// @route   GET /api/users/account
+// @route   GET /api/v1/users/account
 // @access  Private
 exports.getUserProfile = async (req, res) => {
   res.json({ success: true, user: req.user })
 };
 
 // @desc    Update user profile
-// @route   PATCH /api/users
+// @route   PATCH /api/v1/users
 // @access  Private
 exports.updateUserProfile = async (req, res) => {
   const updates = Object.keys(req.body);
@@ -130,7 +134,10 @@ exports.updateUserProfile = async (req, res) => {
   const isValid = updates.every(update => allowedUpdates.includes(update))
 
   if (!isValid) {
-    return res.status(400).send({ error: 'Invalid updates!' })
+    return res.status(400).json({
+      success: false, 
+      error: 'Invalid updates!' 
+    })
   }
 
   try {
@@ -139,29 +146,36 @@ exports.updateUserProfile = async (req, res) => {
 
     res.send(req.user)
   } catch (e) {
-    res.status(400).send(e)
-  }
+    return res.status(400).json({
+      success: false,
+      error: e.message,
+    })  }
 };
 
 // @desc    Delete user
-// @route   POST /api/users/delete
+// @route   POST /api/v1/users/delete
 // @access  Private
 exports.deleteUser = async (req, res) => {
   try {
     await req.user.remove()
-    // sendGoodbyeEmail(req.user.email, req.user.username)
-    res.send(req.user)
+    sendGoodbyeEmail(req.user.email, req.user.username)
+    res.json({success: true, message: 'Delete user successful', user: req.user})
   } catch (e) {
-    res.status(500).send()
+    return res.status(500).json({
+      success: false,
+      error: e.message,
+    });
   }
 };
 
 // @desc    Upload profilePicture
 // @access  Private
-// @route   POST /api/users/account/avatar
+// @route   POST /api/v1/users/account/avatar
 exports.uploadProfilePicture = async (req, res) => {
+  
+  try {
+    profilePictureUpload(req, res, async (err) => {
 
-  profilePictureUpload(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading.
       return res.status(400).send({
@@ -169,44 +183,99 @@ exports.uploadProfilePicture = async (req, res) => {
       })
     } else if (err) {
       // An unknown/custom error occurred when uploading.
-      return res.status(400).json({error: err.message})
+      return res.status(400).json({
+        success: false,
+        error: e.message,
+      })
     }
     // Everything went fine.
     const buffer = await sharp(req.file.buffer).resize({width: 250, height: 250}).png().toBuffer()
-    req.user.profilePicture = buffer
-    await req.user.save()
-    res.json({
-      success: true,
-      message: 'Upload successful'
+
+    const {user, merchant} = req
+    const targets = {user, merchant}
+
+    for(const prop in targets ) {
+      if(req[prop]) {
+        req[prop].profilePicture = buffer
+        req[prop].save()
+
+        return res.json({
+          success: true,
+          message: 'Upload successful'
+        })
+      }
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: e.message,
     })
   })
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      error: e.message,
+    });
+  }
+
 
 }
 
 // @desc    Read profilePicture
 // @access  Private
-// @route   GET /api/users/account/avatar
+// @route   GET /api/v1/users/account/avatar
 exports.readProfilePicture = async (req, res) => {
   try {
-    if(!req.user.profilePicture) {
-      throw new Error()
-    }
 
-    res.set('Content-Type', 'image/png')
-    res.send(req.user.profilePicture)
+    const {user, merchant} = req
+    const targets = {user, merchant}
+
+    for(const prop in targets ) {
+      if(req[prop]) {
+        if(!req[prop].profilePicture) {
+          throw new Error()
+        }
+
+        res.set('Content-Type', 'image/png')
+        res.send(req[prop].profilePicture)
+      }
+    }
   } catch (e) {
-    res.status(404).send()
+    res.status(404).json({
+      success: false,
+      error: 'No image found'
+    })
   }
 }
 
 // @desc    Delete profilePicture
 // @access  Private
-// @route   DELETE /api/users/account/avatar
+// @route   DELETE /api/v1/users/account/avatar
 exports.deleteProfilePicture = async (req, res) => {
-  req.user.profilePicture = undefined
-  await req.user.save()
-  res.json({
-    success: true,
-    message: 'Delete successful'
+  try {
+    const {user, merchant} = req
+    const targets = {user, merchant}
+
+  for(const prop in targets ) {
+    if(req[prop] && req[prop].profilePicture) {
+      req[prop].profilePicture = undefined
+      await req[prop].save()
+      
+    return res.json({
+      success: true,
+      message: 'Delete successful'
+      })
+    }
+  }
+  res.status(404).json({
+    success: false,
+    error: 'No image found'
   })
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      error: e.message,
+    });
+  }
+
 }

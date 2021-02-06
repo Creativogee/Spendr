@@ -18,8 +18,4 @@ router
   .route('/account/giftcards/transfer/:id')
   .post(auth, transferGiftcards)
 
-router
-  .route('/account/giftcards/:id/:spendr')
-  .post(auth, scanGiftcards)
-
 module.exports = router

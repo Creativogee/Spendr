@@ -22,7 +22,7 @@ test('should create user', async () => {
 test('should delete user after authorization', async () => {
   await request(app)
       .delete('/api/v1/users/account')
-      .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${userOne.token}`)
       .send()
       .expect(200)
 
@@ -53,7 +53,7 @@ test('should login user with username and password', async () => {
 test('should logout user after authorization', async () => {
   await request(app)
       .post('/api/v1/users/logout')
-      .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${userOne.token}`)
       .send()
       .expect(200)
 })
@@ -61,7 +61,7 @@ test('should logout user after authorization', async () => {
 test('should get user profile after authorization', async () => {
   await request(app)
       .get('/api/v1/users/account')
-      .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${userOne.token}`)
       .send()
       .expect(200)
 })
@@ -69,7 +69,7 @@ test('should get user profile after authorization', async () => {
 test('should update user profile', async () => {
   await request(app)
       .patch('/api/v1/users/account')
-      .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${userOne.token}`)
       .send({
         username: 'creativorgy'
       })
@@ -79,7 +79,7 @@ test('should update user profile', async () => {
 test('should upload profile picture after authorization', async () => {
   await request(app)
       .post('/api/v1/users/account/avatar')
-      .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${userOne.token}`)
       .attach('picture', 'tests/fixtures/files/profile-pic.jpg')
       .expect(200)
 })
@@ -87,9 +87,12 @@ test('should upload profile picture after authorization', async () => {
 test('should delete profile picture after authorization', async () => {
   await request(app)
       .delete('/api/v1/users/account/avatar')
-      .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+      .set('Authorization', `Bearer ${userOne.token}`)
       .send()
-      .expect(200)
-})
+      .expect(404)
+
+      const user = await User.findById(userOneId)
+      expect(user.profilePicture).toBeFalsy()
+    })
 
 

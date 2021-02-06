@@ -25,15 +25,9 @@ const giftcardSchema = new Schema({
   },
 
   transfers: [{
-      senderId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
+      from: mongoose.Schema.Types.ObjectId,
 
-      recieverId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
+      to:  mongoose.Schema.Types.ObjectId,
 
       when: Date
   }],

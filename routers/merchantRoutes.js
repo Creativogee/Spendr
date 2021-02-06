@@ -17,6 +17,10 @@ const {
   deleteProfilePicture
 } = require('../controllers/userRoutesHandlers')
 
+const {
+  scanGiftcards
+} = require('../controllers/giftcardRoutesHandlers')
+
 router.route('/merchants').post(createMerchant);
 
 router.route('/merchants/login').post(loginMerchant);
@@ -29,10 +33,14 @@ router
   .patch(auth, updateMerchantProfile)
   .delete(auth, deleteMerchant)
 
-//   router
-//   .route('/merchants/account/avatar')
-//   .post( auth, uploadProfilePicture)
-//   .get(auth, readProfilePicture)
-//   .delete(auth, deleteProfilePicture)
+  router
+  .route('/merchants/account/avatar')
+  .post( auth, uploadProfilePicture)
+  .get(auth, readProfilePicture)
+  .delete(auth, deleteProfilePicture)
+
+router
+  .route('/account/giftcards/:id/:spendr')
+  .post(auth, scanGiftcards)
 
 module.exports = router;
