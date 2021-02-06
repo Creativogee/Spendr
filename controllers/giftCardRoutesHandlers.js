@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs')
 const { sendOTP } = require('../emails/account')
 const Giftcard = require('../models/giftcardModel')
 const User = require('../models/userModel')
+const Merchant = require('../models/merchantModel')
 
 
 // @desc    Create a giftcard
@@ -12,13 +13,16 @@ const User = require('../models/userModel')
 exports.createGiftcards = async (req, res, next) => {
 
   try {
-    const giftcard = new Giftcard({...req.body, authorId: req.user._id, holder: req.user._id})
+    const giftcard = new Giftcard({...req.body, authorId: req.user._id, holderId: req.user._id})
 
     await giftcard.save()
 
     return res.status(200).json({
       success: true,
-      giftcard
+      id: giftcard._id,
+      type: giftcard.type,
+      amount: giftcard.amount,
+      status: giftcard.status,
     })
   } catch (e) {
     return res.status(400).json({
@@ -59,7 +63,18 @@ exports.readGiftcards = async (req, res, next) => {
     })
     .execPopulate()
 
-  res.send(req.user.giftcards);
+    const giftcards = req.user.giftcards.map(giftcard => {
+      return {
+        id: giftcard._id,
+        type: giftcard.type,
+        amount: giftcard.amount,
+        status: giftcard.status,
+      }
+    })
+
+  res.json({
+    giftcards
+  })
 
   } catch (e) {
     res.status(500).send(e);
@@ -78,11 +93,15 @@ exports.transferGiftcards = async (req, res, next) => {
       if(!req.body.otp) {
         const otp = otpGen.generate(6)
         req.user.otp = otp
-        await req.user.save()
         return res.json({succes: true, message: 'A One-Time-Password (OTP) has been sent to you'})
       }
 
       const address = await user.generateAddress(req)
+      user.addresses = user.addresses.concat({ address })
+      user.otp = undefined
+
+      await req.user.save()
+
 
       if(address) {
         return res.json({ success: true, address })
@@ -113,14 +132,14 @@ exports.transferGiftcards = async (req, res, next) => {
 
       const giftcard = await Giftcard.findOne({
         _id: req.params.id,
-        holder: req.user._id
+        holderId: req.user._id
       })
 
       if(!giftcard) {
         throw new Error('Giftcard does not exist')
       }
 
-      giftcard.holder = mongoose.Types.ObjectId(reciever._id)
+      giftcard.holderId = mongoose.Types.ObjectId(reciever._id)
       const transfer = {
         senderId: req.user._id,
         recieverId: reciever._id,
@@ -135,7 +154,9 @@ exports.transferGiftcards = async (req, res, next) => {
       res.json({
         success: true,
         message: 'Giftcard transfer successful',
-        giftcard
+        type: giftcard.type,
+        amount: giftcard.amount,
+        'sent to': reciever.username,
       })
     }
 
@@ -146,4 +167,79 @@ exports.transferGiftcards = async (req, res, next) => {
 
     res.status(500).json({success: false, error: e.message})
   }
+}
+
+// @desc    Scan giftcards
+// @route   POST /api/v1/users/account/giftcards/:id/:spendr
+// @access  Private
+exports.scanGiftcards = async (req, res, next) => {
+  class CustomError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "customError";
+    }
+  }
+  
+  const _id = req.params.id
+  const spendr = req.params.spendr
+try {
+  const merchant = await Merchant.findById(req.user._id)
+  const giftcard = await Giftcard.findById(_id)
+  const user = await User.findOne({username: spendr})
+
+  if(!giftcard) {
+    throw new customError(`Not a valid ${merchant.company} giftcard`)
+  }
+  
+  if(user._id === giftcard.holderId) {
+    throw new customError(`Not a valid ${merchant.company} giftcard`)
+  }
+  
+  if(merchant.company === giftcard.type) {
+    throw new customError(`Not a valid ${merchant.company} giftcard`)
+  }
+
+  giftcard.holderId = mongoose.Types.ObjectId(req.user._id)
+  
+  const transfer = {
+    newHolderId: reciever._id,
+    when: Date.now()
+  }
+
+  giftcard.transfers = giftcard.transfers.concat(transfer)
+
+  giftcard.status = 'REDEEMED'
+
+  await giftcard.save()
+
+  res.json({
+    success: true,
+    message: 'Transaction successful',
+    type: giftcard.type,
+    amount: giftcard.amount,
+    customer: user.username,
+    picture: user.profilePicture
+  })
+  
+} catch (e) {
+  if(e.name === 'customError') {
+    return res.status(404).json({
+      success: false,
+      error: e.message
+    })
+  }
+
+  if(e.name === 'Error') {
+    return res.status(400).json({
+      success: false,
+      error: e.message
+    })
+  }
+
+  res.status(500).json({
+    success: false,
+    error: e.message,
+    message: 'Server currently undergoing maintenance. Please check back shortly'
+  })
+}
 }

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const User = require('./userModel');
 const {Schema} = mongoose
 
 const giftcardSchema = new Schema({
@@ -8,7 +7,7 @@ const giftcardSchema = new Schema({
     ref: 'User',
   },
 
-  holder: {
+  holderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
