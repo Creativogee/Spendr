@@ -97,7 +97,11 @@ merchantSchema.methods.toJSON = function () {
 
   delete merchantObject.password
   delete merchantObject.token
+  delete merchantObject.addresses
+  delete merchantObject.createdAt
+  delete merchantObject.updatedAt
   delete merchantObject.verifyEmail
+  delete merchantObject.__v
   delete merchantObject.profilePicture
 
   return merchantObject

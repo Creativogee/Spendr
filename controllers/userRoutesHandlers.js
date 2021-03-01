@@ -218,7 +218,6 @@ exports.uploadProfilePicture = async (req, res) => {
     });
   }
 
-
 }
 
 // @desc    Read profilePicture

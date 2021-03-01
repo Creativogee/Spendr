@@ -92,7 +92,7 @@ exports.readGiftcards = async (req, res, next) => {
   }
 }
 
-// @desc    Recieve giftcards
+// @desc    Send and Recieve giftcards
 // @route   POST /api/v1/account/giftcards/transfer/-?trf=recv
 // @route   POST /api/v1/account/giftcards/transfer/:id/?trf=send
 // @access  Private
@@ -232,13 +232,14 @@ try {
     throw new CustomError('Giftcard has been redeemed')
   }
 
-  if(user._id === giftcard.holderId) {
+  if(user._id.toString() !== giftcard.holderId.toString()) {
     throw new CustomError(`Not a valid ${req.merchant.company} giftcard`)
   }
   
-  if(req.merchant.company === giftcard.type) {
+  if(req.merchant.company !== giftcard.type) {
     throw new CustomError(`Not a valid ${req.merchant.company} giftcard`)
   }
+
 
   giftcard.holderId = mongoose.Types.ObjectId(req.merchant._id)
   

@@ -115,6 +115,7 @@ userSchema.methods.toJSON = function () {
   delete userObject.addresses
   delete userObject.createdAt
   delete userObject.updatedAt
+  delete userObject.verifyEmail
   delete userObject.__v
   delete userObject.profilePicture;
 
